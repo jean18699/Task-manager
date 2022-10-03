@@ -18,3 +18,4 @@ client.connect(connectionUrl, {useNewUrlParser: true}, (error, client)=>{
     })
 
 })
+ 
