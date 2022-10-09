@@ -3,11 +3,13 @@ const { default: mongoose, Model, model } = require('mongoose');
 const User = require('./models/user');
 const Task = require('./models/task');
 require('./db/mongoose');
+const router = require('./routers/user');
 const {MongoClient} = require('mongodb');
 const app = express();
 
 const port = process.env.PORT || 3000;
 
+app.use(router);
 app.use(express.json());
 
 const dbUrl = "mongodb://localhost:27017";
