@@ -2,6 +2,9 @@ const express = require('express')
 const router = express.Router();
 const User = require('../models/user');
 const auth = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+const { resolveSoa } = require('dns');
 
 //El segundo argumento es el middleware que se correra antes de esta funcion
 router.get("/users/me", auth, async (req, res)=>{
@@ -85,6 +88,34 @@ router.delete("/users/me", auth, async (req, res)=>{
     }catch(e){
         res.status(500).send(e);
     }
+});
+
+
+const upload = multer({
+    dest: 'images/avatars',
+    limits: {
+        fileSize: 1000000
+    },
+    fileFilter(req, file, cb){
+        const validExtensions = ['.jpg', '.jpeg', '.png'];
+        const extension = path.extname(file.originalname); //path.extname me da la extension del nombre del archivo
+        if(!validExtensions.includes(extension)){
+            return cb(new Error('Upload a file with these compatible formats: jpg, jpeg or png'))
+        }
+
+        cb(undefined, true);
+        //cb = callback
+      // cb(new Error('File must be a PDF'));
+      // cb(undefined, true);
+      // cb(undefined, false);
+    }
+
+});
+
+router.post('/users/me/avatar', upload.single('avatar'), (req, res)=>{
+  res.send();
+}, (error, req, res, next)=>{ //funcion creada para manejar errores
+    res.status(400).send({error: error.message});
 });
 
 
