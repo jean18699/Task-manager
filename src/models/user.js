@@ -48,6 +48,9 @@ const userSchema = new mongoose.Schema(
                 }
             }
         ],
+        avatar: {
+            type: Buffer
+        }
     }, {
         timestamps: true //agrega la data de cuando fue creado el registro.
     });
@@ -90,6 +93,7 @@ userSchema.methods.toJSON = function(){
 
     delete userObject.password;
     delete userObject.tokens;
+    delete userObject.avatar;
 
     return userObject;
 }

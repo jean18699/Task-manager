@@ -4,7 +4,8 @@ const User = require('../models/user');
 const auth = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
-const { resolveSoa } = require('dns');
+const { response } = require('express');
+const sharp = require('sharp');
 
 //El segundo argumento es el middleware que se correra antes de esta funcion
 router.get("/users/me", auth, async (req, res)=>{
@@ -90,15 +91,14 @@ router.delete("/users/me", auth, async (req, res)=>{
     }
 });
 
-
+//configuring the upload of files with multer
 const upload = multer({
-    dest: 'images/avatars',
     limits: {
         fileSize: 1000000
     },
     fileFilter(req, file, cb){
         const validExtensions = ['.jpg', '.jpeg', '.png'];
-        const extension = path.extname(file.originalname); //path.extname me da la extension del nombre del archivo
+        const extension = path.extname(file.originalname).toLocaleLowerCase(); //path.extname me da la extension del nombre del archivo
         if(!validExtensions.includes(extension)){
             return cb(new Error('Upload a file with these compatible formats: jpg, jpeg or png'))
         }
@@ -112,11 +112,45 @@ const upload = multer({
 
 });
 
-router.post('/users/me/avatar', upload.single('avatar'), (req, res)=>{
-  res.send();
+router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res)=>{
+    //req.user.avatar = req.file.buffer;
+    const buffer = await sharp(req.file.buffer).resize({width:250, height: 250}).png().toBuffer(); //sharp permite transformar las imagenes (recortarlas por ejemplo)
+    req.user.avatar = buffer;
+    await req.user.save();
+    res.send();
 }, (error, req, res, next)=>{ //funcion creada para manejar errores
     res.status(400).send({error: error.message});
 });
 
+
+router.delete('/users/me/avatar', auth, async (req, res)=>{
+    try {
+        if(req.user.avatar){
+            req.user.avatar = undefined;
+            await req.user.save();
+            res.send();
+        }   
+        else {
+            throw new Error('Avatar not found');
+        }
+    } catch (e) {
+        res.status(404).send({error: e.message});
+    }
+})
+
+router.get('/users/:id/avatar', async (req, res)=>{
+    try {
+        const user = await User.findById(req.params.id);
+        if(!user || !user.avatar){
+            throw new Error();
+        }
+
+        res.set('Content-Type', 'image/jpg'); //indicando que el contenido de la respuesta sera una imagen
+        res.send(user.avatar);
+
+    } catch (e) {
+        res.status(404).send();
+    }
+});
 
 module.exports = router;
