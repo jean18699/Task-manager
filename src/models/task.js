@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const Task = mongoose.model('Tasks', {
+const taskSchema = new mongoose.Schema({
     description: {
         type: String,
         trim: true,
@@ -9,7 +9,16 @@ const Task = mongoose.model('Tasks', {
     completed: {
         type: Boolean,
         default: false
+    },
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        ref: 'User' //permite crear una referencia a otra entidad (en este caso a usuario)
     }
-});
+}, {
+    timestamps: true
+})
+
+const Task = mongoose.model('Task', taskSchema);
 
 module.exports = Task;

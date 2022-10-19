@@ -8,18 +8,6 @@ router.get("/users/me", auth, async (req, res)=>{
     res.send(req.user);
 });
 
-router.get("/users/:id", async (req,res)=>{
-    try{
-        const user = await User.findById(req.params.id);
-        if(!user){
-            return res.status(404).send();
-        }
-        res.send(user);
-    }catch(e){
-        res.status(500).send(e);
-    }
-});
-
 router.post("/users/logout", auth, async (req, res)=>{
     try {
         req.user.tokens = req.user.tokens.filter((token)=>{
@@ -42,10 +30,8 @@ router.post("/users/logoutAll", auth, async(req, res)=>{
     }
 })
 
-router.patch('/users/:id', async (req, res)=>{
-    const id = req.params.id;
-    const updatedBody = req.body;
-
+router.patch('/users/me', auth, async (req, res)=>{
+    
     //Agregando validacion de lo que se puede modificar
     const updates = Object.keys(req.body);
     const allowedUpdates = ['name', 'email', 'password', 'age']
@@ -55,7 +41,7 @@ router.patch('/users/:id', async (req, res)=>{
     }
 
     try {
-        const user = await User.findById(id);
+        const user = req.user;
         updates.forEach(update => user[update] = req.body[update])  //el arreglo al lado del nombre de un objeto permite acceder a sus propiedades de manera dinamica. "Bracket notation"
         await user.save();
 
@@ -75,7 +61,6 @@ router.post("/users", async (req, res)=>{
     try {
         await user.save();
         const token = await user.generateAuthToken();
-        console.log(token);
         res.status(201).send({user, token});
     }catch(e){
         res.status(400).send(e);
@@ -93,14 +78,10 @@ router.post('/users/login', async(req, res)=>{
     }
 })
 
-router.delete("/users/:id", async (req, res)=>{
+router.delete("/users/me", auth, async (req, res)=>{
     try {
-        const user = await User.findByIdAndDelete(req.params.id);
-
-        if(!user){
-           return res.status(404).send('User not found');
-        }
-        res.status(200).send(user);
+        await req.user.remove();
+        res.status(200).send(req.user);
     }catch(e){
         res.status(500).send(e);
     }

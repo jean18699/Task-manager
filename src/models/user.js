@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Task = require('./task');
 
 const userSchema = new mongoose.Schema(
     {
@@ -46,12 +47,17 @@ const userSchema = new mongoose.Schema(
                     required: true
                 }
             }
-        ]
-    }
+        ],
+    }, {
+        timestamps: true //agrega la data de cuando fue creado el registro.
+    });
 
-
-
-);
+//Virtual define las relaciones entre entidades.
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'user' //foreign field es como el foreign key en donde indicamos donde esta la referencia a este objeto en la otra tabla o entidad. En este caso tasks.user
+})
 
 userSchema.methods.generateAuthToken = async function(){
     const user = this;
@@ -77,6 +83,17 @@ userSchema.statics.findByCredentials = async(email, password) => {
     return user;
 }
 
+//toJSON cambia que es lo que se retorna al usuario cuando obtiene el user
+userSchema.methods.toJSON = function(){
+    const user = this;
+    const userObject = user.toObject()
+
+    delete userObject.password;
+    delete userObject.tokens;
+
+    return userObject;
+}
+
 //Hash the plain text password before saving
 userSchema.pre('save', async function(next){
     const user = this; //"this" is the current user in the schema
@@ -86,7 +103,12 @@ userSchema.pre('save', async function(next){
     next(); //"next" ends this middleware function so the main function "save" can be called
 });
 
-
+//Dete user tasks when user is removed
+userSchema.pre('remove', async function(next){
+    const user = this;
+    await Task.deleteMany({user: user._id});
+    next();
+});
 
 const User = mongoose.model('User', userSchema);
 
