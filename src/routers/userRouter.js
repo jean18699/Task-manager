@@ -124,7 +124,7 @@ router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res)=
         res.send();
     }
     else{
-        throw new Error('Must upload a document');
+        res.status(404).send({error: 'Must upload a file'});
     }
 }, (error, req, res, next)=>{ //funcion creada para manejar errores
     res.status(400).send({error: error.message});
