@@ -116,11 +116,16 @@ const upload = multer({
 });
 
 router.post('/users/me/avatar', auth, upload.single('avatar'), async (req, res)=>{
-    //req.user.avatar = req.file.buffer;
-    const buffer = await sharp(req.file.buffer).resize({width:250, height: 250}).png().toBuffer(); //sharp permite transformar las imagenes (recortarlas por ejemplo)
-    req.user.avatar = buffer;
-    await req.user.save();
-    res.send();
+  
+    if(req.file.buffer){
+        const buffer = await sharp(req.file.buffer).resize({width:250, height: 250}).png().toBuffer(); //sharp permite transformar las imagenes (recortarlas por ejemplo)
+        req.user.avatar = buffer;
+        await req.user.save();
+        res.send();
+    }
+    else{
+        throw new Error('Must upload a document');
+    }
 }, (error, req, res, next)=>{ //funcion creada para manejar errores
     res.status(400).send({error: error.message});
 });
