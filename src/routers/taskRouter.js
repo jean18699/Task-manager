@@ -1,6 +1,7 @@
 const express = require('express');
 const auth = require('../middleware/auth');
 const Task = require('../models/task');
+const { route } = require('./userRouter');
 const router = express.Router();
 
 // GET /tasks?completed=true --> filtering
@@ -103,5 +104,6 @@ router.delete("/tasks/:id", auth, async (req, res)=>{
         res.status(500).send(e);
     }
 });
+
 
 module.exports = router;
